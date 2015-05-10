@@ -91,6 +91,7 @@ class SimutilManager(object):
             return proc.pid
         else:
             print "    Status: Booted"
+            return None
 
 
     def LaunchSimulatorById(self, deviceId):
@@ -98,7 +99,7 @@ class SimutilManager(object):
         device = self.simctl.getDeviceById(simStatus,deviceId)
         if not device:
             raise RuntimeError('Err: No such device id')
-        self.launchSimulatroByDevice(device)
+        return self.launchSimulatroByDevice(device)
 
 
     def LaunchSimulatorByName(self, deviceName, runtimeName):
@@ -106,7 +107,7 @@ class SimutilManager(object):
         device = self.simctl.getDeviceByName(simStatus,deviceName,runtimeName)
         if not device:
             raise RuntimeError('Err: No such device name')
-        self.launchSimulatroByDevice(device)
+        return self.launchSimulatroByDevice(device)
 
     def generateMovName(self, device):
         ts = time.time()
