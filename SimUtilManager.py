@@ -32,7 +32,6 @@ class SimutilManager(object):
                 print "-- {runtime} --".format(runtime=x['runtime'])
                 for d in x['devices']:
                     print "    Name: {name:<20}Id: {id:<40} Status: {state}".format(name=d['name'],id=d['id'], state=d['state'])
-        
 
     def ShowSimulatorStatus(self):
         simStatus = self.simctl.GetStatus()
@@ -42,24 +41,39 @@ class SimutilManager(object):
 
     def GetDeviceStatus(self, deviceName, deviceRuntime):
         simStatus = self.simctl.GetStatus()
-        device = self.simctl.getDeviceByName(deviceName,deviceRuntime)
+        device = self.simctl.getDeviceByName(simStatus, deviceName,deviceRuntime)
         return device
 
-    def CreateSimulatorDevice(self, name, devicetype, runtime):
-        device = self.GetDeviceStatus(name,runtime)
+    def CreateSimulatorDevice(self, deviceName, typeName, runtimeName):
+        device = self.GetDeviceStatus(deviceName,runtimeName)
         print "== Create Device =="
         if device:
             print "    Device had been created!"
-        newId = self.simctl.CreateDevice(name, devicetype, runtime)
+        newId = self.simctl.CreateDevice(deviceName, typeName, runtimeName)
         if newId:
-            print "    Name: {name:<20}Id: {id}".format(name=name,id=newId)
+            print "    Name: {name:<20}Id: {id}".format(name=deviceName,id=newId)
         return newId
 
-    def DeleteSimulatorDevice(self, ID):
+    def DeleteSimulatorDevice(self, deviceName, deviceRuntime):
+        device = self.GetDeviceStatus(deviceName,deviceRuntime)
+        if not device:
+            raise RuntimeError('Err: No such device')
+        if device['state'] == 'Booted':
+            raise RuntimeError('Err: Device is still running')
+
+        print "== Delete Device =="
+        print "    Name: {name:<20}Id: {id}".format(name=device['name'],id=device['id'])
+        self.simctl.DeleteDevice(device['id'])
+        pass
+
+    def DeleteSimulatorDeviceById(self, ID):
         simStatus = self.simctl.GetStatus()
         device = self.simctl.getDeviceById(simStatus, ID)
         if not device:
             raise RuntimeError('Err: No such device id')
+        if device['state'] == 'Booted':
+            raise RuntimeError('Err: Device is still running')
+
         print "== Delete Device =="
         print "    Name: {name:<20}Id: {id}".format(name=device['name'],id=device['id'])
         self.simctl.DeleteDevice(ID)
@@ -85,9 +99,9 @@ class SimutilManager(object):
         self.launchSimulatroByDevice(device)
 
 
-    def LaunchSimulatorByName(self, name, runtimeName):
+    def LaunchSimulatorByName(self, deviceName, runtimeName):
         simStatus = self.simctl.GetStatus()
-        device = self.simctl.getDeviceByName(simStatus,runtimeName,name)
+        device = self.simctl.getDeviceByName(simStatus,deviceName,runtimeName)
         if not device:
             raise RuntimeError('Err: No such device name')
         self.launchSimulatroByDevice(device)
@@ -115,7 +129,7 @@ class SimutilManager(object):
 
     def InstalliOSApp(self, appPath, deviceName, runtimeName):
         simStatus = self.simctl.GetStatus()
-        device = self.simctl.getDeviceByName(simStatus,runtimeName,deviceName)
+        device = self.simctl.getDeviceByName(simStatus,deviceName,runtimeName)
         if not device:
             raise RuntimeError('Err: No such device name')
         if not os.path.isdir(appPath):
@@ -144,10 +158,10 @@ class SimutilManager(object):
 
         if device['state'] != 'Booted':
             raise RuntimeError('Err: Simulator should be booted')
-        
+
         print "== Uninstall Appliction by Path =="
         self.showAppInfo(app)
-        self.simctl.UninstallApp(appId,device)
+        self.simctl.UninstallApp(app['CFBundleIdentifier'],device)
 
 
     def UninstalliOSAppBy(self, appId, deviceName, runtimeName):
@@ -163,34 +177,28 @@ class SimutilManager(object):
         pass
 
 class TestSimUtilManager(unittest.TestCase):
+    def setUp(self):
+        print "Running:", self._testMethodName
+
     def test_ShowSimulatorStatus(self):
         simmgr = SimutilManager()
         simmgr.ShowSimulatorStatus()
         pass
 
     def test_CreateDeleteDevice(self):
-        simmgr = SimutilManager()
-        try:
-            newId = simmgr.CreateSimulatorDevice("Unittest","iPhone 6","iOS 8.3")
-            simmgr.DeleteSimulatorDevice(newId)
-        except Exception, e:
-            print e
+        simmgr = SimutilManager()        
+        newId = simmgr.CreateSimulatorDevice("Unittest","iPhone 6","iOS 8.3")
+        simmgr.DeleteSimulatorDevice("Unittest","iOS 8.3")
 
     def test_LaunchSimulator(self):
         simmgr = SimutilManager()
-        try:
-            simmgr.LaunchSimulatorByName("Debug2","iOS 8.3")
-            simmgr.LaunchSimulatorByName("Debug","iOS 8.3")
-        except Exception, e:
-            print e
+        simmgr.LaunchSimulatorByName("Debug2","iOS 8.3")
+        simmgr.LaunchSimulatorByName("Debug","iOS 8.3")
 
     def test_InstalliOSApp(self):
         simmgr = SimutilManager()
-        try:
-            simmgr.LaunchSimulatorByName("TestInstallApp","iOS 8.3")
-            simmgr.InstalliOSApp('./TestApp/TestApp.app',"TestInstallApp","iOS 8.3")
-        except Exception, e:
-            print e
+        simmgr.LaunchSimulatorByName("TestInstallApp","iOS 8.3")
+        simmgr.InstalliOSApp('./TestApp/TestApp.app',"TestInstallApp","iOS 8.3")
         
     def test_UninstalliOSApp(self):
         simmgr = SimutilManager()

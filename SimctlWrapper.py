@@ -35,7 +35,7 @@ class SimctlWrapper(object):
                 return x
         return None
 
-    def getDeviceByName(self, status, runtimeName, deviceName):
+    def getDeviceByName(self, status, deviceName, runtimeName):
         for x in status['Devices']:
             if x['runtime'] == runtimeName:
                 for d in x['devices']:
@@ -61,18 +61,17 @@ class SimctlWrapper(object):
         deleteOption = "delete {deviceId}".format(deviceId=deviceId)
         self.runSimctl(deleteOption)
 
-    def CreateDevice(self, name, deviceTypeName, runtimeName):
+    def CreateDevice(self, deviceName, deviceTypeName, runtimeName):
         status = self.GetStatus()
         deviceType = self.getTypeByName(status,deviceTypeName)
         runtime = self.getRuntimeByName(status,runtimeName)
-
         if (not deviceType) or (not runtime):
-            raise RuntimeError('Err: Not such device/rutime')
+            raise RuntimeError('Err: Not such device type/rutime ({type}/{runtime})'.format(type=deviceType,runtime=runtime))
 
-        if self.getDeviceByName(status,runtimeName,name):
+        if self.getDeviceByName(status,deviceName,runtimeName):
             raise RuntimeError('Err: Device had been create')
 
-        createOption = "create {name} {typeid} {runtimeid}".format(name=name,typeid=deviceType['id'],runtimeid=runtime['id'])
+        createOption = "create {name} {typeid} {runtimeid}".format(name=deviceName,typeid=deviceType['id'],runtimeid=runtime['id'])
         
         newId = self.runSimctl(createOption).replace('\n','')
         return newId
