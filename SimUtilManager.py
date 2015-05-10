@@ -4,7 +4,9 @@ import sys
 import unittest
 import subprocess
 import plistlib
+from bplist import BPlistReader
 from SimctlWrapper import SimctlWrapper
+
 
 class SimutilManager(object):
     """docstring for SimutilManager"""
@@ -38,13 +40,13 @@ class SimutilManager(object):
         self.showDeviceTypes(simStatus)
         self.showDevices(simStatus,False)
 
-    def GetDeviceStatus(self, deviceName, deviceType, deviceRuntime):
+    def GetDeviceStatus(self, deviceName, deviceRuntime):
         simStatus = self.simctl.GetStatus()
         device = self.simctl.getDeviceByName(deviceName,deviceRuntime)
         return device
 
     def CreateSimulatorDevice(self, name, devicetype, runtime):
-        device = self.GetDeviceStatus(name,devicetype,runtime)
+        device = self.GetDeviceStatus(name,runtime)
         print "== Create Device =="
         if device:
             print "    Device had been created!"
@@ -89,11 +91,27 @@ class SimutilManager(object):
         if not device:
             raise RuntimeError('Err: No such device name')
         self.launchSimulatroByDevice(device)
+
+    def extractBPlist(self, bplist):
+        fd = open(bplist,'r')
+        data = fd.read()
+        bp = BPlistReader(data)
+        return bp.parse()
     
     def getAppInfo(self, appPath):
         plistPath = os.path.join(appPath,'Info.plist')
         if os.path.isfile(plistPath):
-            print plistlib.readPlist(plistPath)
+            return self.extractBPlist(plistPath)
+        else:
+            return None
+
+    def showAppInfo(self, app):
+        print "-- App Info --"
+        print "    App Name:            {name}".format(name=app['CFBundleName'])
+        print "    App Identifier:      {AppId}".format(AppId=app['CFBundleIdentifier'])
+        print "    Minimum Support OS:  {os}".format(os=app['MinimumOSVersion']) 
+        print "    Platform Name:       {platform}".format(platform=app['DTPlatformName'])
+        print "    SDK Name:            {SDK}".format(SDK=app['DTSDKName'])
 
     def InstalliOSApp(self, appPath, deviceName, runtimeName):
         simStatus = self.simctl.GetStatus()
@@ -104,13 +122,35 @@ class SimutilManager(object):
             raise RuntimeError('Err: No such App')
         if device['state'] != 'Booted':
             raise RuntimeError('Err: Simulator should be booted')
+        
+        app = self.getAppInfo(appPath)
+        if not app:
+            raise RuntimeError('Err: Invalid iOS App')
 
         print "== Install Appliction =="
         print "    App Path: {path}".format(path=appPath)
+        self.showAppInfo(app)
         self.simctl.InstallApp(appPath,device)
         pass
 
-    def UninstalliOSApp(self, appId, deviceName, runtimeName):
+    def UninstalliOSAppByPath(self, appPath, deviceName, runtimeName):
+        app = self.getAppInfo(appPath)
+        if not app:
+            raise RuntimeError('Err: Invalid iOS App')
+
+        device = self.GetDeviceStatus(deviceName,runtimeName)
+        if not device:
+            raise RuntimeError('Err: No such device name')
+
+        if device['state'] != 'Booted':
+            raise RuntimeError('Err: Simulator should be booted')
+        
+        print "== Uninstall Appliction by Path =="
+        self.showAppInfo(app)
+        self.simctl.UninstallApp(appId,device)
+
+
+    def UninstalliOSAppBy(self, appId, deviceName, runtimeName):
         simStatus = self.simctl.GetStatus()
         device = self.simctl.getDeviceByName(simStatus,runtimeName,deviceName)
         if not device:
