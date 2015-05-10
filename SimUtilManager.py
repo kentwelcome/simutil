@@ -4,6 +4,8 @@ import sys
 import unittest
 import subprocess
 import plistlib
+import time
+import datetime
 from bplist import BPlistReader
 from SimctlWrapper import SimctlWrapper
 
@@ -105,6 +107,30 @@ class SimutilManager(object):
         if not device:
             raise RuntimeError('Err: No such device name')
         self.launchSimulatroByDevice(device)
+
+    def generateMovName(self, device):
+        ts = time.time()
+        st = st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d-%H:%M:%S')
+        moviePath = "./Task/{deviceName}_{st}.mov".format(deviceName=device['name'],st=st)
+        return moviePath
+
+    def RecordSimulator(self, device):
+        if device['state'] != 'Booted':
+            raise RuntimeError('Err: Simulator should be booted')
+        
+        moviePath = self.generateMovName(device)
+
+        print "== Start Record =="
+        print "    Record File: {moviePath}".format(moviePath=moviePath)
+        cmd = "./bin/screen-recording {deviceName} {moviePath}".format(deviceName=device['name'],moviePath=moviePath)
+        os.system(cmd)
+        print "== Stop Record =="
+
+    def RecordSimulatorByName(self, deviceName, runtimeName):
+        device = self.GetDeviceStatus(deviceName, runtimeName)
+        if not device:
+            raise RuntimeError('Err: No such device name')
+        self.RecordSimulator(device)
 
     def extractBPlist(self, bplist):
         fd = open(bplist,'r')

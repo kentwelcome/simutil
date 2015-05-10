@@ -62,6 +62,8 @@ class SimutilOptParser(object):
         cmd.add_argument(dest='runtimeName', action='store', 
                          type=str, default=None, metavar='runtime', 
                          help='Launch device with runtime. (ex. iOS 8.3)')
+        cmd.add_argument('--record', dest='record', action='store_true', default=False,
+                         help='Record iOS Simulator screen into movie file.')
 
     def add_install_commands(self, cmd):
         cmd.add_argument(dest='appPath', action='store', 

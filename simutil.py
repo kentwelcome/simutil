@@ -23,6 +23,8 @@ def main():
         simmgr.DeleteSimulatorDevice(args.deviceName,args.runtimeName)
     elif args.cmd == 'launch':
         simmgr.LaunchSimulatorByName(args.deviceName,args.runtimeName)
+        if args.record:
+            simmgr.RecordSimulatorByName(args.deviceName,args.runtimeName)
     elif args.cmd == 'install':
         simmgr.InstalliOSApp(args.appPath,args.deviceName,args.runtimeName)
     elif args.cmd == 'uninstall':
