@@ -54,9 +54,9 @@ class SimctlWrapper(object):
     def DeleteDevice(self, deviceId):
         status = self.GetStatus()
         device = self.getDeviceById(status,deviceId)
-
         if not device:
             raise RuntimeError('Err: No such device')
+        pass
 
         deleteOption = "delete {deviceId}".format(deviceId=deviceId)
         self.runSimctl(deleteOption)
@@ -77,6 +77,14 @@ class SimctlWrapper(object):
         newId = self.runSimctl(createOption).replace('\n','')
         return newId
 
+    def InstallApp(self, appPath, device):
+        installOption = "install {device} {path}".format(device=device['id'],path=appPath)
+        print self.runSimctl(installOption).replace('\n','')
+
+    def UninstallApp(self, appId, device):
+        uninstallOption = "uninstall {device} {appId}".format(device=device['id'],appId=appId)
+        print self.runSimctl(uninstallOption).replace('\n','')
+
     def runSimctl(self,options):
         cmd = "xcrun simctl {option}".format(option=options)
         return os.popen(cmd).read()
@@ -84,12 +92,11 @@ class SimctlWrapper(object):
 class TestSimctlWrapper(unittest.TestCase):
     def test_ShowStatus(self):
         simctl = SimctlWrapper()
-        simctl.SetDebug(False)
         simctl.GetStatus()
         pass
+
     def test_CreateAndDeleteNewDevice(self):
         simctl = SimctlWrapper()
-        simctl.SetDebug(False)
         try:
             newId = simctl.CreateDevice("TestDevice","iPhone 5","iOS 8.3")
             print newId

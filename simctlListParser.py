@@ -129,7 +129,13 @@ class SimctlListParser(object):
         self.DbgPrint(self.status)
         return self.status
 
-realTestData = '''
+
+
+
+
+class TestSimctlListParser(unittest.TestCase):
+    def setUp(self):
+        self.realTestData = '''
 == Device Types ==
 iPhone 4s (com.apple.CoreSimulator.SimDeviceType.iPhone-4s)
 iPhone 5 (com.apple.CoreSimulator.SimDeviceType.iPhone-5)
@@ -197,14 +203,18 @@ iOS 8.3 (8.3 - 12F69) (com.apple.CoreSimulator.SimRuntime.iOS-8-3)
     Resizable iPhone (D07F4164-C87C-44E5-B29F-68DB06B70B37) (Shutdown) (unavailable, runtime profile not found)
     Resizable iPad (E124F37D-6F05-45FE-93BC-8A54F961D948) (Shutdown) (unavailable, runtime profile not found)
 '''
-
-class TestSimctlListParser(unittest.TestCase):
-    def test_InvalidTestData(self):
-        simctl = SimctlListParser("test")
+        self.invalidTestData = "test"
         pass
+
+    def test_InvalidTestData(self):
+        simctl = SimctlListParser(self.invalidTestData)
+        status = simctl.parse()
+        self.assertEquals({}, status)
+        pass
+
     def test_ReadTestData(self):
-        simctl = SimctlListParser(realTestData)
-        simctl.parse()
+        simctl = SimctlListParser(self.realTestData)
+        status = simctl.parse()
         pass
 
 if __name__ == '__main__':
