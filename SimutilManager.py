@@ -123,7 +123,7 @@ class SimutilManager(object):
 
         print "== Start Record =="
         print "    Record File: {moviePath}".format(moviePath=moviePath)
-        cmd = "./bin/screen-recording {deviceName} {moviePath}".format(deviceName=device['name'],moviePath=moviePath)
+        cmd = "./bin/SimulatorMonitor {deviceName} {moviePath}".format(deviceName=device['name'],moviePath=moviePath)
         os.system(cmd)
         print "== Stop Record =="
 
